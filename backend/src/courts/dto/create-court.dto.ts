@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsIn, IsNumber, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsIn, IsNumber, Min, ValidateIf } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 
 export class CreateCourtDto {
   @IsString()
@@ -23,16 +23,18 @@ export class CreateCourtDto {
   @IsOptional()
   imageUrl?: string;
 
+  @ValidateIf((o) => o.defaultPrice !== null && o.defaultPrice !== undefined)
   @IsNumber()
-  @IsOptional()
-  @Type(() => Number)
   @Min(0)
-  defaultPrice?: number;
+  @Type(() => Number)
+  @Transform(({ value }) => value === '' ? null : value)
+  defaultPrice?: number | null;
 
+  @ValidateIf((o) => o.premiumPrice !== null && o.premiumPrice !== undefined)
   @IsNumber()
-  @IsOptional()
-  @Type(() => Number)
   @Min(0)
-  premiumPrice?: number;
+  @Type(() => Number)
+  @Transform(({ value }) => value === '' ? null : value)
+  premiumPrice?: number | null;
 }
 

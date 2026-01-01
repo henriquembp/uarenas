@@ -86,8 +86,12 @@ export default function CourtsPage() {
             sportType: formData.sportType,
             imageUrl: formData.imageUrl || undefined,
             isActive: formData.isActive,
-            defaultPrice: formData.defaultPrice ? parseFloat(formData.defaultPrice) : null,
-            premiumPrice: formData.premiumPrice ? parseFloat(formData.premiumPrice) : null,
+            defaultPrice: formData.defaultPrice && formData.defaultPrice.trim() !== '' 
+              ? parseFloat(formData.defaultPrice) 
+              : null,
+            premiumPrice: formData.premiumPrice && formData.premiumPrice.trim() !== '' 
+              ? parseFloat(formData.premiumPrice) 
+              : null,
           },
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -102,8 +106,12 @@ export default function CourtsPage() {
             sportType: formData.sportType,
             imageUrl: formData.imageUrl || undefined,
             isActive: formData.isActive,
-            defaultPrice: formData.defaultPrice ? parseFloat(formData.defaultPrice) : null,
-            premiumPrice: formData.premiumPrice ? parseFloat(formData.premiumPrice) : null,
+            defaultPrice: formData.defaultPrice && formData.defaultPrice.trim() !== '' 
+              ? parseFloat(formData.defaultPrice) 
+              : null,
+            premiumPrice: formData.premiumPrice && formData.premiumPrice.trim() !== '' 
+              ? parseFloat(formData.premiumPrice) 
+              : null,
           },
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -197,10 +205,12 @@ export default function CourtsPage() {
         },
       })
 
-      if (response.data.success) {
+      if (response.data.success && response.data.url) {
         setFormData((prev) => ({ ...prev, imageUrl: response.data.url }))
         setPreviewImage(response.data.url)
         alert('Imagem enviada com sucesso!')
+      } else {
+        throw new Error('Resposta inválida do servidor')
       }
     } catch (error: any) {
       console.error('Erro ao fazer upload:', error)

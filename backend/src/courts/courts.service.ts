@@ -16,8 +16,12 @@ export class CourtsService {
         sportType: createDto.sportType,
         isActive: createDto.isActive ?? true,
         imageUrl: createDto.imageUrl,
-        defaultPrice: createDto.defaultPrice ? new Prisma.Decimal(createDto.defaultPrice) : null,
-        premiumPrice: createDto.premiumPrice ? new Prisma.Decimal(createDto.premiumPrice) : null,
+        defaultPrice: createDto.defaultPrice !== null && createDto.defaultPrice !== undefined
+          ? new Prisma.Decimal(createDto.defaultPrice)
+          : null,
+        premiumPrice: createDto.premiumPrice !== null && createDto.premiumPrice !== undefined
+          ? new Prisma.Decimal(createDto.premiumPrice)
+          : null,
       },
     });
   }
