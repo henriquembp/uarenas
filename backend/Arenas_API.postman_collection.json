@@ -1,0 +1,1386 @@
+{
+	"info": {
+		"name": "Arenas API",
+		"description": "Collection completa da API do sistema de gestão de arenas de esportes de areia",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3001",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Endpoint público para verificar se a API está funcionando"
+					}
+				}
+			]
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.environment.set('user_id', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"usuario@test.com\",\n  \"password\": \"senha123\",\n  \"name\": \"Usuário Teste\",\n  \"phone\": \"11999999999\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "Registrar novo usuário"
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"    pm.environment.set('access_token', jsonData.access_token);",
+									"    pm.environment.set('user_id', jsonData.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"usuario@test.com\",\n  \"password\": \"senha123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Fazer login e obter token de acesso"
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "List Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						},
+						"description": "Listar todos os usuários (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Get User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{user_id}}"
+								}
+							]
+						},
+						"description": "Buscar usuário por ID"
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Nome Atualizado\",\n  \"phone\": \"11988888888\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{user_id}}"
+								}
+							]
+						},
+						"description": "Atualizar usuário"
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Deletar usuário (ADMIN apenas)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Courts",
+			"item": [
+				{
+					"name": "List Courts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/courts",
+							"host": ["{{base_url}}"],
+							"path": ["courts"]
+						},
+						"description": "Listar todas as quadras (público)"
+					}
+				},
+				{
+					"name": "Get Court",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/courts/:id",
+							"host": ["{{base_url}}"],
+							"path": ["courts", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Buscar quadra por ID (público)"
+					}
+				},
+				{
+					"name": "Create Court",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Quadra 1\",\n  \"description\": \"Quadra de vôlei de areia\",\n  \"sportType\": \"volei\",\n  \"imageUrl\": \"https://example.com/image.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/courts",
+							"host": ["{{base_url}}"],
+							"path": ["courts"]
+						},
+						"description": "Criar nova quadra (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Update Court",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Quadra 1 Atualizada\",\n  \"description\": \"Nova descrição\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/courts/:id",
+							"host": ["{{base_url}}"],
+							"path": ["courts", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Atualizar quadra (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Delete Court",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/courts/:id",
+							"host": ["{{base_url}}"],
+							"path": ["courts", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Deletar quadra (ADMIN apenas)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Bookings",
+			"item": [
+				{
+					"name": "List Bookings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bookings",
+							"host": ["{{base_url}}"],
+							"path": ["bookings"]
+						},
+						"description": "Listar todas as reservas"
+					}
+				},
+				{
+					"name": "Get Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bookings/:id",
+							"host": ["{{base_url}}"],
+							"path": ["bookings", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Buscar reserva por ID"
+					}
+				},
+				{
+					"name": "Create Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"courtId\": \"court-id-here\",\n  \"date\": \"2025-01-15T10:00:00Z\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"11:00\",\n  \"notes\": \"Reserva teste\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bookings",
+							"host": ["{{base_url}}"],
+							"path": ["bookings"]
+						},
+						"description": "Criar nova reserva"
+					}
+				},
+				{
+					"name": "Update Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"CONFIRMED\",\n  \"notes\": \"Reserva confirmada\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bookings/:id",
+							"host": ["{{base_url}}"],
+							"path": ["bookings", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Atualizar reserva"
+					}
+				},
+				{
+					"name": "Delete Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bookings/:id",
+							"host": ["{{base_url}}"],
+							"path": ["bookings", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Deletar reserva"
+					}
+				}
+			]
+		},
+		{
+			"name": "Classes",
+			"item": [
+				{
+					"name": "List Classes",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/classes",
+							"host": ["{{base_url}}"],
+							"path": ["classes"]
+						},
+						"description": "Listar todas as turmas"
+					}
+				},
+				{
+					"name": "Get Class",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/classes/:id",
+							"host": ["{{base_url}}"],
+							"path": ["classes", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Buscar turma por ID"
+					}
+				},
+				{
+					"name": "Create Class",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Turma Iniciantes\",\n  \"description\": \"Turma para iniciantes\",\n  \"courtId\": \"court-id-here\",\n  \"teacherId\": \"teacher-id-here\",\n  \"dayOfWeek\": 1,\n  \"startTime\": \"18:00\",\n  \"endTime\": \"19:30\",\n  \"startDate\": \"2025-01-15T00:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/classes",
+							"host": ["{{base_url}}"],
+							"path": ["classes"]
+						},
+						"description": "Criar nova turma (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Update Class",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Turma Atualizada\",\n  \"description\": \"Nova descrição\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/classes/:id",
+							"host": ["{{base_url}}"],
+							"path": ["classes", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Atualizar turma (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Add Student to Class",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"studentId\": \"student-id-here\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/classes/:id/students",
+							"host": ["{{base_url}}"],
+							"path": ["classes", ":id", "students"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Adicionar estudante à turma (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Remove Student from Class",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/classes/:id/students/:studentId",
+							"host": ["{{base_url}}"],
+							"path": ["classes", ":id", "students", ":studentId"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								},
+								{
+									"key": "studentId",
+									"value": ""
+								}
+							]
+						},
+						"description": "Remover estudante da turma (ADMIN apenas)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Invoices",
+			"item": [
+				{
+					"name": "List Invoices",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/invoices",
+							"host": ["{{base_url}}"],
+							"path": ["invoices"]
+						},
+						"description": "Listar todas as faturas"
+					}
+				},
+				{
+					"name": "Get Invoice",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/invoices/:id",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Buscar fatura por ID"
+					}
+				},
+				{
+					"name": "Create Invoice",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"user-id-here\",\n  \"description\": \"Mensalidade\",\n  \"amount\": 150.00,\n  \"dueDate\": \"2025-02-01T00:00:00Z\",\n  \"classId\": \"class-id-here\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/invoices",
+							"host": ["{{base_url}}"],
+							"path": ["invoices"]
+						},
+						"description": "Criar nova fatura (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Update Invoice",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"Mensalidade Atualizada\",\n  \"amount\": 200.00\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/invoices/:id",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Atualizar fatura (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Mark Invoice as Paid",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/invoices/:id/pay",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", ":id", "pay"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Marcar fatura como paga (ADMIN apenas)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Stores",
+			"item": [
+				{
+					"name": "List Stores",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stores",
+							"host": ["{{base_url}}"],
+							"path": ["stores"]
+						},
+						"description": "Listar todas as lojas"
+					}
+				},
+				{
+					"name": "Get Store",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stores/:id",
+							"host": ["{{base_url}}"],
+							"path": ["stores", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Buscar loja por ID"
+					}
+				},
+				{
+					"name": "Create Store",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Loja Principal\",\n  \"description\": \"Loja da arena\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/stores",
+							"host": ["{{base_url}}"],
+							"path": ["stores"]
+						},
+						"description": "Criar nova loja (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Update Store",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Loja Atualizada\",\n  \"description\": \"Nova descrição\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/stores/:id",
+							"host": ["{{base_url}}"],
+							"path": ["stores", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Atualizar loja (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Delete Store",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stores/:id",
+							"host": ["{{base_url}}"],
+							"path": ["stores", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Deletar loja (ADMIN apenas)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "List Products",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products",
+							"host": ["{{base_url}}"],
+							"path": ["products"]
+						},
+						"description": "Listar todos os produtos"
+					}
+				},
+				{
+					"name": "Get Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/:id",
+							"host": ["{{base_url}}"],
+							"path": ["products", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Buscar produto por ID"
+					}
+				},
+				{
+					"name": "Create Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"storeId\": \"store-id-here\",\n  \"name\": \"Produto Teste\",\n  \"description\": \"Descrição do produto\",\n  \"price\": 29.90,\n  \"cost\": 15.00,\n  \"sku\": \"SKU123\",\n  \"barcode\": \"1234567890123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/products",
+							"host": ["{{base_url}}"],
+							"path": ["products"]
+						},
+						"description": "Criar novo produto (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Produto Atualizado\",\n  \"price\": 39.90\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/products/:id",
+							"host": ["{{base_url}}"],
+							"path": ["products", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Atualizar produto (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/:id",
+							"host": ["{{base_url}}"],
+							"path": ["products", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Deletar produto (ADMIN apenas)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Stock",
+			"item": [
+				{
+					"name": "Get Stock Movements",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stock/movements?productId=",
+							"host": ["{{base_url}}"],
+							"path": ["stock", "movements"],
+							"query": [
+								{
+									"key": "productId",
+									"value": "",
+									"description": "Opcional: filtrar por produto"
+								}
+							]
+						},
+						"description": "Listar movimentações de estoque (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Get Stock by Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stock/:productId",
+							"host": ["{{base_url}}"],
+							"path": ["stock", ":productId"],
+							"variable": [
+								{
+									"key": "productId",
+									"value": ""
+								}
+							]
+						},
+						"description": "Buscar estoque de um produto"
+					}
+				},
+				{
+					"name": "Create Stock Movement",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"product-id-here\",\n  \"type\": \"ENTRY\",\n  \"quantity\": 10,\n  \"notes\": \"Entrada de estoque\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/stock/movements",
+							"host": ["{{base_url}}"],
+							"path": ["stock", "movements"]
+						},
+						"description": "Criar movimentação de estoque (ADMIN apenas). Tipos: ENTRY, EXIT, ADJUSTMENT"
+					}
+				}
+			]
+		},
+		{
+			"name": "Sales",
+			"item": [
+				{
+					"name": "List Sales",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/sales",
+							"host": ["{{base_url}}"],
+							"path": ["sales"]
+						},
+						"description": "Listar todas as vendas (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Get Sale",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/sales/:id",
+							"host": ["{{base_url}}"],
+							"path": ["sales", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						},
+						"description": "Buscar venda por ID (ADMIN apenas)"
+					}
+				},
+				{
+					"name": "Create Sale",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"items\": [\n    {\n      \"productId\": \"product-id-here\",\n      \"quantity\": 2,\n      \"unitPrice\": 29.90\n    }\n  ],\n  \"notes\": \"Venda teste\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/sales",
+							"host": ["{{base_url}}"],
+							"path": ["sales"]
+						},
+						"description": "Criar nova venda (ADMIN apenas)"
+					}
+				}
+			]
+		}
+	]
+}
+

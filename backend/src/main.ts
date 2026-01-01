@@ -9,7 +9,7 @@ async function bootstrap() {
     // Habilitar CORS
     const frontendUrl = process.env.FRONTEND_URL;
     const allowedOrigins = frontendUrl
-      ? frontendUrl.split(',').map((url) => url.trim())
+      ? frontendUrl.split(',').map((url) => url.trim().replace(/\/$/, ''))
       : ['http://localhost:3000'];
 
     app.enableCors({
@@ -17,7 +17,10 @@ async function bootstrap() {
         // Permite requisições sem origin (mobile apps, Postman, etc)
         if (!origin) return callback(null, true);
         
-        if (allowedOrigins.includes(origin)) {
+        // Normaliza a origin (remove barra final se houver)
+        const normalizedOrigin = origin.replace(/\/$/, '');
+        
+        if (allowedOrigins.includes(normalizedOrigin)) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));
