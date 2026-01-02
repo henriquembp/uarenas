@@ -25,7 +25,7 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "postinstall": "prisma generate",
     "railway:build": "npm run prisma:generate && npm run build",
-    "railway:start": "npm run prisma:migrate:deploy && npm run start:prod"
+    "railway:start": "npm run prisma:generate && npm run prisma:migrate:deploy && npm run start:prod"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

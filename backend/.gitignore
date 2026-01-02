@@ -40,7 +40,8 @@ lerna-debug.log*
 .env.*.local
 
 # Prisma
-prisma/migrations/*.sql
+# Migrations devem estar no repositório para Railway aplicar automaticamente
+# prisma/migrations/*.sql
 
 
 
