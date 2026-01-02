@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import axios from 'axios'
 import { 
   LayoutDashboard, 
   Home, 
@@ -15,7 +16,8 @@ import {
   ShoppingCart,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react'
 
 const menuItems = [
@@ -28,7 +30,17 @@ const menuItems = [
   { href: '/dashboard/products', label: 'Produtos', icon: ShoppingBag },
   { href: '/dashboard/stock', label: 'Estoque', icon: Package },
   { href: '/dashboard/sales', label: 'Vendas', icon: ShoppingCart },
+  { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
 ]
+
+interface Organization {
+  id: string
+  name: string
+  logoUrl?: string
+  primaryColor?: string
+  secondaryColor?: string
+  accentColor?: string
+}
 
 export default function DashboardLayout({
   children,
@@ -38,6 +50,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
+  const [organization, setOrganization] = useState<Organization | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
@@ -50,7 +63,38 @@ export default function DashboardLayout({
     }
 
     setUser(JSON.parse(userData))
+    
+    // Buscar dados da organização
+    const fetchOrganization = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+        const response = await axios.get(`${apiUrl}/organizations/current`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        setOrganization(response.data)
+      } catch (error) {
+        console.error('Erro ao carregar organização:', error)
+      }
+    }
+
+    fetchOrganization()
   }, [router])
+
+  // Aplicar cores dinamicamente
+  useEffect(() => {
+    if (organization) {
+      const root = document.documentElement
+      if (organization.primaryColor) {
+        root.style.setProperty('--org-primary', organization.primaryColor)
+      }
+      if (organization.secondaryColor) {
+        root.style.setProperty('--org-secondary', organization.secondaryColor)
+      }
+      if (organization.accentColor) {
+        root.style.setProperty('--org-accent', organization.accentColor)
+      }
+    }
+  }, [organization])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -72,8 +116,29 @@ export default function DashboardLayout({
       <aside className="hidden lg:flex lg:flex-shrink-0">
         <div className="flex flex-col w-64">
           <div className="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-4">
-              <h1 className="text-2xl font-bold text-indigo-600">Arenas</h1>
+            <div className="flex items-center flex-shrink-0 px-4 mb-2">
+              {organization?.logoUrl ? (
+                <div className="flex items-center space-x-3">
+                  <img 
+                    src={organization.logoUrl} 
+                    alt={organization.name || 'Logo'} 
+                    className="h-10 w-10 object-contain rounded"
+                  />
+                  <h1 
+                    className="text-xl font-bold"
+                    style={{ color: organization.primaryColor || '#4F46E5' }}
+                  >
+                    {organization.name || 'Arenas'}
+                  </h1>
+                </div>
+              ) : (
+                <h1 
+                  className="text-2xl font-bold"
+                  style={{ color: organization?.primaryColor || '#4F46E5' }}
+                >
+                  {organization?.name || 'Arenas'}
+                </h1>
+              )}
             </div>
             <div className="mt-8 flex-grow flex flex-col">
               <nav className="flex-1 px-2 space-y-1">
@@ -86,13 +151,18 @@ export default function DashboardLayout({
                       href={item.href}
                       className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                         isActive
-                          ? 'bg-indigo-50 text-indigo-600'
+                          ? 'text-white'
                           : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                       }`}
+                      style={isActive ? {
+                        backgroundColor: organization?.primaryColor || '#4F46E5',
+                      } : {}}
                     >
                       <Icon
                         className={`mr-3 flex-shrink-0 h-5 w-5 ${
-                          isActive ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-500'
+                          isActive 
+                            ? 'text-white' 
+                            : 'text-gray-400 group-hover:text-gray-500'
                         }`}
                       />
                       {item.label}
@@ -132,7 +202,21 @@ export default function DashboardLayout({
           <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white lg:hidden">
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
-                <h1 className="text-xl font-bold text-indigo-600">Arenas</h1>
+                <div className="flex items-center space-x-3">
+                  {organization?.logoUrl && (
+                    <img 
+                      src={organization.logoUrl} 
+                      alt={organization.name || 'Logo'} 
+                      className="h-8 w-8 object-contain rounded"
+                    />
+                  )}
+                  <h1 
+                    className="text-xl font-bold"
+                    style={{ color: organization?.primaryColor || '#4F46E5' }}
+                  >
+                    {organization?.name || 'Arenas'}
+                  </h1>
+                </div>
                 <button
                   onClick={closeSidebar}
                   className="text-gray-400 hover:text-gray-500"
@@ -152,13 +236,16 @@ export default function DashboardLayout({
                         onClick={closeSidebar}
                         className={`group flex items-center px-3 py-2 text-base font-medium rounded-md transition-colors ${
                           isActive
-                            ? 'bg-indigo-50 text-indigo-600'
+                            ? 'text-white'
                             : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                         }`}
+                        style={isActive ? {
+                          backgroundColor: organization?.primaryColor || '#4F46E5',
+                        } : {}}
                       >
                         <Icon
                           className={`mr-3 flex-shrink-0 h-6 w-6 ${
-                            isActive ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-500'
+                            isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
                           }`}
                         />
                         {item.label}
@@ -198,7 +285,21 @@ export default function DashboardLayout({
             >
               <Menu className="h-6 w-6" />
             </button>
-            <h1 className="text-lg font-bold text-indigo-600">Arenas</h1>
+            <div className="flex items-center space-x-2">
+              {organization?.logoUrl && (
+                <img 
+                  src={organization.logoUrl} 
+                  alt={organization.name || 'Logo'} 
+                  className="h-6 w-6 object-contain rounded"
+                />
+              )}
+              <h1 
+                className="text-lg font-bold"
+                style={{ color: organization?.primaryColor || '#4F46E5' }}
+              >
+                {organization?.name || 'Arenas'}
+              </h1>
+            </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-700 hidden sm:block">{user.name}</span>
               <button

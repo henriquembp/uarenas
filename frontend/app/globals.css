@@ -5,6 +5,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Cores da organização (serão definidas dinamicamente) */
+  --org-primary: #4F46E5; /* indigo-600 padrão */
+  --org-secondary: #8B5CF6; /* violet-500 padrão */
+  --org-accent: #F59E0B; /* amber-500 padrão */
 }
 
 @media (prefers-color-scheme: dark) {
