@@ -81,6 +81,8 @@ export default function BookingsPage() {
   })
   const [registering, setRegistering] = useState(false)
   const bookingsListRef = useRef<HTMLDivElement>(null)
+  const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false)
+  const [bookingToCancel, setBookingToCancel] = useState<string | null>(null)
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -304,19 +306,27 @@ export default function BookingsPage() {
     }
   }
 
-  const handleCancelBooking = async (id: string) => {
-    if (!confirm('Deseja realmente cancelar esta reserva?')) return
+  const handleCancelBooking = (id: string) => {
+    // Abre o modal de confirmação em vez de usar confirm() (que pode não funcionar bem no iOS)
+    setBookingToCancel(id)
+    setShowCancelConfirmModal(true)
+  }
+
+  const confirmCancelBooking = async () => {
+    if (!bookingToCancel) return
 
     try {
       const token = localStorage.getItem('token')
       await axios.patch(
-        `${apiUrl}/bookings/${id}`,
+        `${apiUrl}/bookings/${bookingToCancel}`,
         { status: 'CANCELLED' },
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       )
 
+      setShowCancelConfirmModal(false)
+      setBookingToCancel(null)
       alert('Reserva cancelada com sucesso!')
       fetchAvailability()
       if (activeTab === 'my') {
@@ -327,6 +337,8 @@ export default function BookingsPage() {
     } catch (error) {
       console.error('Erro ao cancelar reserva:', error)
       alert('Erro ao cancelar reserva')
+      setShowCancelConfirmModal(false)
+      setBookingToCancel(null)
     }
   }
 
@@ -667,8 +679,17 @@ export default function BookingsPage() {
                     {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED' && (
                       <div className="mt-3 flex space-x-2">
                         <button
-                          onClick={() => handleCancelBooking(booking.id)}
-                          className="flex-1 bg-red-50 text-red-700 py-1 px-2 rounded text-xs font-medium hover:bg-red-100"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleCancelBooking(booking.id)
+                          }}
+                          className="flex-1 bg-red-50 text-red-700 py-1 px-2 rounded text-xs font-medium hover:bg-red-100 active:bg-red-200 touch-manipulation cursor-pointer"
+                          style={{ 
+                            WebkitTapHighlightColor: 'transparent',
+                            touchAction: 'manipulation',
+                            minHeight: '44px', // Tamanho mínimo recomendado para touch
+                          }}
                         >
                           Cancelar
                         </button>
@@ -874,6 +895,43 @@ export default function BookingsPage() {
                 className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
               >
                 {registering ? 'Cadastrando...' : 'Cadastrar e Reservar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Cancelamento */}
+      {showCancelConfirmModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirmar Cancelamento</h3>
+            <p className="text-gray-700 mb-6">
+              Deseja realmente cancelar esta reserva?
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowCancelConfirmModal(false)
+                  setBookingToCancel(null)
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                style={{ 
+                  minHeight: '44px',
+                  touchAction: 'manipulation',
+                }}
+              >
+                Não, manter
+              </button>
+              <button
+                onClick={confirmCancelBooking}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                style={{ 
+                  minHeight: '44px',
+                  touchAction: 'manipulation',
+                }}
+              >
+                Sim, cancelar
               </button>
             </div>
           </div>
