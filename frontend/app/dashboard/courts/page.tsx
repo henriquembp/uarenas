@@ -22,6 +22,7 @@ export default function CourtsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingCourt, setEditingCourt] = useState<Court | null>(null)
+  const [user, setUser] = useState<any>(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -51,6 +52,11 @@ export default function CourtsPage() {
   const [showCopyModal, setShowCopyModal] = useState(false)
 
   useEffect(() => {
+    // Busca o usuário do localStorage
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      setUser(JSON.parse(userData))
+    }
     fetchCourts()
   }, [])
 
@@ -604,24 +610,29 @@ export default function CourtsPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Quadras</h1>
-        <button
-          onClick={openNewModal}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Nova Quadra
-        </button>
+        {/* Mostra botão apenas para ADMIN */}
+        {user?.role === 'ADMIN' && (
+          <button
+            onClick={openNewModal}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Nova Quadra
+          </button>
+        )}
       </div>
 
       {courts.length === 0 ? (
         <div className="bg-white shadow rounded-lg p-12 text-center">
           <p className="text-gray-600 mb-4">Nenhuma quadra cadastrada ainda.</p>
-          <button
-            onClick={openNewModal}
-            className="text-indigo-600 hover:text-indigo-800 font-medium"
-          >
-            Cadastrar primeira quadra
-          </button>
+          {user?.role === 'ADMIN' && (
+            <button
+              onClick={openNewModal}
+              className="text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+              Cadastrar primeira quadra
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -690,41 +701,44 @@ export default function CourtsPage() {
                     {court.description}
                   </p>
                 )}
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openAvailabilityModal(court)}
-                      className="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded-md hover:bg-blue-100 flex items-center justify-center gap-2 text-sm"
-                    >
-                      <Clock className="h-4 w-4" />
-                      Horários Semanais
-                    </button>
-                    <button
-                      onClick={() => openSpecificDateModal(court)}
-                      className="flex-1 bg-purple-50 text-purple-600 px-3 py-2 rounded-md hover:bg-purple-100 flex items-center justify-center gap-2 text-sm"
-                      title="Configurar horários para uma data específica (feriados, manutenção, etc.)"
-                    >
-                      <Clock className="h-4 w-4" />
-                      Data Específica
-                    </button>
+                {/* Mostra botões de ação apenas para ADMIN */}
+                {user?.role === 'ADMIN' && (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openAvailabilityModal(court)}
+                        className="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded-md hover:bg-blue-100 flex items-center justify-center gap-2 text-sm"
+                      >
+                        <Clock className="h-4 w-4" />
+                        Horários Semanais
+                      </button>
+                      <button
+                        onClick={() => openSpecificDateModal(court)}
+                        className="flex-1 bg-purple-50 text-purple-600 px-3 py-2 rounded-md hover:bg-purple-100 flex items-center justify-center gap-2 text-sm"
+                        title="Configurar horários para uma data específica (feriados, manutenção, etc.)"
+                      >
+                        <Clock className="h-4 w-4" />
+                        Data Específica
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(court)}
+                        className="flex-1 bg-indigo-50 text-indigo-600 px-3 py-2 rounded-md hover:bg-indigo-100 flex items-center justify-center gap-2 text-sm"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(court.id)}
+                        className="flex-1 bg-red-50 text-red-600 px-3 py-2 rounded-md hover:bg-red-100 flex items-center justify-center gap-2 text-sm"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Excluir
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(court)}
-                      className="flex-1 bg-indigo-50 text-indigo-600 px-3 py-2 rounded-md hover:bg-indigo-100 flex items-center justify-center gap-2 text-sm"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(court.id)}
-                      className="flex-1 bg-red-50 text-red-600 px-3 py-2 rounded-md hover:bg-red-100 flex items-center justify-center gap-2 text-sm"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Excluir
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           ))}

@@ -34,17 +34,24 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(response.data.user))
         router.push('/dashboard')
       } else {
-        await axios.post(`${apiUrl}/auth/register`, {
+        const response = await axios.post(`${apiUrl}/auth/register`, {
           email: formData.email,
           password: formData.password,
           name: formData.name,
           phone: formData.phone || undefined,
         })
         
-        setError('')
-        alert('Cadastro realizado com sucesso! Faça login para continuar.')
-        setIsLogin(true)
-        setFormData({ email: '', password: '', name: '', phone: '' })
+        // Se o registro retornar token (login automático), salva e redireciona
+        if (response.data.access_token) {
+          localStorage.setItem('token', response.data.access_token)
+          localStorage.setItem('user', JSON.stringify(response.data.user))
+          router.push('/dashboard')
+        } else {
+          setError('')
+          alert('Cadastro realizado com sucesso! Faça login para continuar.')
+          setIsLogin(true)
+          setFormData({ email: '', password: '', name: '', phone: '' })
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao processar solicitação')

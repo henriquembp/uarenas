@@ -31,6 +31,7 @@ export class CourtAvailabilityService {
       const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
       const nextDay = new Date(date);
       nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+      const dayOfWeek = date.getUTCDay(); // Dia da semana (0 = Domingo, 6 = Sábado)
 
       // Busca primeiro se há disponibilidade específica para a data
       const specificAvail = await this.prisma.courtAvailability.findMany({
@@ -50,7 +51,32 @@ export class CourtAvailabilityService {
           .map((item) => item.timeSlot);
         return result; // Retorna apenas a disponibilidade específica
       }
-      // Se não houver disponibilidade específica, não retorna nada (deixa vazio para o usuário configurar)
+
+      // Se não houver disponibilidade específica, busca a recorrente do dia da semana
+      const weeklyAvail = await this.prisma.courtAvailability.findMany({
+        where: {
+          courtId,
+          dayOfWeek,
+          specificDate: null,
+        },
+        orderBy: [{ timeSlot: 'asc' }],
+      });
+
+      weeklyAvail.forEach((item) => {
+        if (!result.weekly[dayOfWeek]) {
+          result.weekly[dayOfWeek] = [];
+        }
+        result.weekly[dayOfWeek].push(item.timeSlot);
+        
+        // Adiciona aos horários nobres se for premium
+        if (item.isPremium) {
+          if (!result.premium[dayOfWeek]) {
+            result.premium[dayOfWeek] = [];
+          }
+          result.premium[dayOfWeek].push(item.timeSlot);
+        }
+      });
+
       return result;
     } else {
       // Busca apenas disponibilidade recorrente (sem data específica)

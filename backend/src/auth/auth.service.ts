@@ -2,12 +2,14 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
+import { OrganizationsService } from '../organizations/organizations.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private organizationsService: OrganizationsService,
   ) {}
 
 
@@ -49,20 +51,49 @@ export class AuthService {
     email: string, 
     password: string, 
     name: string, 
-    organizationId: string,
+    organizationId?: string,
+    subdomain?: string,
     phone?: string,
   ) {
+    // Se não foi fornecido organizationId, tenta identificar pela subdomain ou usa organização padrão
+    let finalOrganizationId = organizationId;
+    
+    if (!finalOrganizationId && subdomain) {
+      const organization = await this.organizationsService.findBySubdomain(subdomain);
+      if (organization) {
+        finalOrganizationId = organization.id;
+      }
+    }
+    
+    // Se ainda não tem organizationId, usa a organização padrão
+    if (!finalOrganizationId) {
+      finalOrganizationId = '00000000-0000-0000-0000-000000000001';
+    }
+    
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await this.usersService.create({
       email,
       password: hashedPassword,
       name,
       phone,
-      organizationId,
+      organizationId: finalOrganizationId,
       role: 'VISITOR',
     });
-    const { password: _, ...result } = user;
-    return result;
+    
+    // Faz login automático após registro
+    const payload = { 
+      email: user.email, 
+      sub: user.id, 
+      role: user.role,
+      organizationId: user.organizationId,
+    };
+    
+    const { password: _, ...userWithoutPassword } = user;
+    
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: userWithoutPassword,
+    };
   }
 
   async validateUser(email: string, password: string) {

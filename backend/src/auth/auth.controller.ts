@@ -19,7 +19,8 @@ export class AuthController {
       email: string; 
       password: string; 
       name: string; 
-      organizationId: string;
+      organizationId?: string;
+      subdomain?: string;
       phone?: string;
     },
   ) {
@@ -28,6 +29,7 @@ export class AuthController {
       registerDto.password,
       registerDto.name,
       registerDto.organizationId,
+      registerDto.subdomain,
       registerDto.phone,
     );
   }
