@@ -56,19 +56,45 @@ export class AuthService {
     phone?: string,
   ) {
     // Se não foi fornecido organizationId, tenta identificar pela subdomain ou usa organização padrão
-    let finalOrganizationId = organizationId;
+    let finalOrganizationId = organizationId || undefined;
+    
+    console.log('🔐 Register - Parâmetros recebidos:', {
+      email,
+      name,
+      organizationId,
+      subdomain,
+      phone,
+    });
     
     if (!finalOrganizationId && subdomain) {
       const organization = await this.organizationsService.findBySubdomain(subdomain);
       if (organization) {
         finalOrganizationId = organization.id;
+        console.log('🔐 Register - Organização encontrada por subdomain:', finalOrganizationId);
       }
     }
     
     // Se ainda não tem organizationId, usa a organização padrão
     if (!finalOrganizationId) {
       finalOrganizationId = '00000000-0000-0000-0000-000000000001';
+      console.log('🔐 Register - Usando organização padrão:', finalOrganizationId);
+      
+      // Verifica se a organização padrão existe
+      try {
+        await this.organizationsService.findOne(finalOrganizationId);
+        console.log('🔐 Register - Organização padrão encontrada');
+      } catch (error) {
+        console.error('❌ Register - Organização padrão não encontrada!', error);
+        throw new Error('Organização padrão não encontrada. Entre em contato com o administrador.');
+      }
     }
+    
+    // Garante que finalOrganizationId não seja undefined ou null
+    if (!finalOrganizationId || finalOrganizationId.trim() === '') {
+      throw new Error('Não foi possível determinar a organização para o cadastro');
+    }
+    
+    console.log('🔐 Register - Criando usuário com organizationId:', finalOrganizationId);
     
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await this.usersService.create({

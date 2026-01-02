@@ -276,19 +276,42 @@ export class BookingsService {
     }
 
     // Filtra horários que já passaram (apenas para data de hoje)
-    // Compara a data usando UTC, mas usa horário local para filtrar slots passados
+    // Compara a data usando UTC, mas usa horário de Brasília (UTC-3) para filtrar slots passados
     // pois os horários configurados são no horário local (Brasília)
     const now = new Date();
-    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+    
+    // Converte UTC para horário de Brasília (UTC-3)
+    // Se o servidor está em UTC, subtrai 3 horas para obter o horário de Brasília
+    const utcHour = now.getUTCHours();
+    const utcMinute = now.getUTCMinutes();
+    
+    // Calcula horário de Brasília (UTC-3)
+    // Se for antes das 3h UTC, o horário de Brasília é do dia anterior (após meia-noite)
+    let brasiliaHour = utcHour - 3;
+    let brasiliaMinute = utcMinute;
+    let brasiliaDateOffset = 0;
+    
+    // Ajusta se passar da meia-noite (horário negativo)
+    if (brasiliaHour < 0) {
+      brasiliaHour += 24;
+      brasiliaDateOffset = -1; // Data de Brasília é do dia anterior
+    }
+    
+    // Compara a data selecionada com a data atual em Brasília
+    const todayBrasilia = new Date(Date.UTC(
+      now.getUTCFullYear(), 
+      now.getUTCMonth(), 
+      now.getUTCDate() + brasiliaDateOffset, 
+      0, 0, 0, 0
+    ));
     const selectedDateOnly = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
     // Se for hoje, remove horários que já terminaram
-    // Usa horário local (Brasília) para comparar com os slots configurados
-    if (selectedDateOnly.getTime() === todayUTC.getTime()) {
-      // Obtém o horário local (Brasília) para comparar com os slots
-      const currentHour = now.getHours(); // Horário local
-      const currentMinute = now.getMinutes(); // Horário local
-      const currentTimeMinutes = currentHour * 60 + currentMinute;
+    // Usa horário de Brasília para comparar com os slots configurados
+    if (selectedDateOnly.getTime() === todayBrasilia.getTime()) {
+      const currentTimeMinutes = brasiliaHour * 60 + brasiliaMinute;
+      
+      console.log(`🕐 Filtragem de horários - UTC: ${utcHour}:${String(utcMinute).padStart(2, '0')}, Brasília: ${brasiliaHour}:${String(brasiliaMinute).padStart(2, '0')}, Minutos totais: ${currentTimeMinutes}`);
 
       availableSlots = availableSlots.filter((timeSlot) => {
         const [hours, minutes] = timeSlot.split(':').map(Number);

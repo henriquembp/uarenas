@@ -80,8 +80,26 @@ export class UsersService {
     phone?: string;
     role?: UserRole;
   }) {
+    // Garante que organizationId não seja undefined ou null
+    if (!data.organizationId) {
+      throw new Error('organizationId é obrigatório para criar um usuário');
+    }
+    
+    console.log('👤 UsersService.create - Criando usuário:', {
+      email: data.email,
+      name: data.name,
+      organizationId: data.organizationId,
+    });
+    
     return this.prisma.user.create({
-      data,
+      data: {
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        organizationId: data.organizationId,
+        phone: data.phone,
+        role: data.role || 'VISITOR',
+      },
     });
   }
 
