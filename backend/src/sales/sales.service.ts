@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class SalesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: { userId: string; items: any[]; notes?: string }) {
+  async create(data: { userId: string; organizationId: string; items: any[]; notes?: string }) {
     const total = data.items.reduce(
       (sum, item) => sum + Number(item.unitPrice) * item.quantity,
       0,
@@ -14,6 +14,7 @@ export class SalesService {
     return this.prisma.sale.create({
       data: {
         userId: data.userId,
+        organizationId: data.organizationId,
         total,
         notes: data.notes,
         items: {
@@ -38,9 +39,12 @@ export class SalesService {
     });
   }
 
-  async findAll(filters?: any) {
+  async findAll(organizationId: string, filters?: any) {
     return this.prisma.sale.findMany({
-      where: filters,
+      where: {
+        organizationId,
+        ...filters,
+      },
       include: {
         items: {
           include: {
@@ -55,9 +59,9 @@ export class SalesService {
     });
   }
 
-  async findOne(id: string) {
-    return this.prisma.sale.findUnique({
-      where: { id },
+  async findOne(id: string, organizationId: string) {
+    return this.prisma.sale.findFirst({
+      where: { id, organizationId },
       include: {
         items: {
           include: {

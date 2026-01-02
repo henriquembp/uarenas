@@ -12,7 +12,11 @@ import { ProductsModule } from './products/products.module';
 import { StockModule } from './stock/stock.module';
 import { SalesModule } from './sales/sales.module';
 import { UploadModule } from './upload/upload.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 import { HealthController } from './health/health.controller';
+import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { TenantInterceptor } from './tenant/tenant.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 @Module({
   imports: [
@@ -32,8 +36,19 @@ import { HealthController } from './health/health.controller';
     StockModule,
     SalesModule,
     UploadModule,
+    OrganizationsModule,
   ],
   controllers: [HealthController],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TenantInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}
 

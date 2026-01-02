@@ -8,9 +8,10 @@ import { Prisma } from '@prisma/client';
 export class CourtsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createDto: CreateCourtDto) {
+  async create(createDto: CreateCourtDto, organizationId: string) {
     return this.prisma.court.create({
       data: {
+        organizationId,
         name: createDto.name,
         description: createDto.description,
         sportType: createDto.sportType,
@@ -26,23 +27,28 @@ export class CourtsService {
     });
   }
 
-  async findAll(includeInactive = false) {
+  async findAll(organizationId: string, includeInactive = false) {
     return this.prisma.court.findMany({
-      where: includeInactive ? {} : { isActive: true },
+      where: {
+        organizationId,
+        ...(includeInactive ? {} : { isActive: true }),
+      },
       orderBy: { name: 'asc' },
     });
   }
 
-  async findOne(id: string) {
-    const court = await this.prisma.court.findUnique({ where: { id } });
+  async findOne(id: string, organizationId: string) {
+    const court = await this.prisma.court.findFirst({ 
+      where: { id, organizationId },
+    });
     if (!court) {
       throw new NotFoundException('Quadra não encontrada');
     }
     return court;
   }
 
-  async update(id: string, updateDto: UpdateCourtDto) {
-    await this.findOne(id); // Verifica se existe
+  async update(id: string, updateDto: UpdateCourtDto, organizationId: string) {
+    await this.findOne(id, organizationId); // Verifica se existe
     
     const updateData: any = { ...updateDto };
     
@@ -65,8 +71,8 @@ export class CourtsService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id); // Verifica se existe
+  async remove(id: string, organizationId: string) {
+    await this.findOne(id, organizationId); // Verifica se existe
     return this.prisma.court.update({
       where: { id },
       data: { isActive: false },

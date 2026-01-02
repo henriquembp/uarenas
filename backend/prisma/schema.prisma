@@ -17,6 +17,12 @@ enum UserRole {
   VISITOR
 }
 
+enum OrganizationPlan {
+  FREE
+  BASIC
+  PREMIUM
+}
+
 enum BookingStatus {
   PENDING
   CONFIRMED
@@ -37,44 +43,78 @@ enum StockMovementType {
   ADJUSTMENT
 }
 
-model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  password      String
+model Organization {
+  id            String           @id @default(uuid())
   name          String
-  phone         String?
-  role          UserRole  @default(VISITOR)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  subdomain     String           @unique // Para URLs: arena-a.uarenas.com
+  domain        String?          @unique // Domínio customizado: arena-a.com.br
+  plan          OrganizationPlan @default(FREE)
+  isActive      Boolean          @default(true)
+  // Personalização
+  logoUrl       String?          // URL da logo/marca
+  primaryColor  String?          // Cor primária (ex: #3B82F6)
+  secondaryColor String?          // Cor secundária (ex: #8B5CF6)
+  accentColor   String?          // Cor de destaque (ex: #F59E0B)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   // Relações
-  bookings      Booking[]
+  users     User[]
+  courts    Court[]
+  bookings  Booking[]
+  classes   Class[]
+  stores    Store[]
+  invoices  Invoice[]
+  sales      Sale[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String    @id @default(uuid())
+  organizationId String
+  email          String
+  password       String
+  name           String
+  phone          String?
+  role           UserRole  @default(VISITOR)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relações
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bookings       Booking[]
   classesAsStudent ClassStudent[]
   classesAsTeacher Class[] @relation("ClassTeacher")
-  invoices      Invoice[]
+  invoices       Invoice[]
   stockMovements StockMovement[]
-  sales         Sale[]
+  sales          Sale[]
 
+  @@unique([organizationId, email])
+  @@index([organizationId])
   @@map("users")
 }
 
 model Court {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  sportType   String   // "esportes_areia" - Esportes de Areia (Beach Tennis, Vôlei, Futevôlei)
-  isActive    Boolean  @default(true)
-  imageUrl    String?
-  defaultPrice Decimal? @db.Decimal(10, 2) // Valor padrão do horário de locação
-  premiumPrice Decimal? @db.Decimal(10, 2) // Valor do horário nobre
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  sportType      String   // "esportes_areia" - Esportes de Areia (Beach Tennis, Vôlei, Futevôlei)
+  isActive       Boolean  @default(true)
+  imageUrl       String?
+  defaultPrice   Decimal? @db.Decimal(10, 2) // Valor padrão do horário de locação
+  premiumPrice   Decimal? @db.Decimal(10, 2) // Valor do horário nobre
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relações
-  bookings    Booking[]
-  classes     Class[]
-  availability CourtAvailability[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bookings       Booking[]
+  classes        Class[]
+  availability   CourtAvailability[]
 
+  @@index([organizationId])
   @@map("courts")
 }
 
@@ -97,45 +137,51 @@ model CourtAvailability {
 }
 
 model Booking {
-  id          String        @id @default(uuid())
-  userId      String
-  courtId     String
-  date        DateTime
-  startTime   String        // Formato HH:mm
-  endTime     String        // Formato HH:mm
-  status      BookingStatus @default(PENDING)
-  notes       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id             String        @id @default(uuid())
+  organizationId String
+  userId         String
+  courtId        String
+  date           DateTime
+  startTime      String        // Formato HH:mm
+  endTime        String        // Formato HH:mm
+  status         BookingStatus @default(PENDING)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   // Relações
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  court       Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  court          Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
 
+  @@index([organizationId])
   @@map("bookings")
 }
 
 model Class {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  courtId     String
-  teacherId   String
-  dayOfWeek   Int      // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
-  startTime   String   // Formato HH:mm
-  endTime     String   // Formato HH:mm
-  startDate   DateTime
-  endDate     DateTime?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  courtId        String
+  teacherId      String
+  dayOfWeek      Int      // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+  startTime      String   // Formato HH:mm
+  endTime        String   // Formato HH:mm
+  startDate      DateTime
+  endDate        DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relações
-  court       Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  teacher     User     @relation("ClassTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
-  students    ClassStudent[]
-  invoices    Invoice[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  court          Court        @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  teacher        User         @relation("ClassTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  students       ClassStudent[]
+  invoices       Invoice[]
 
+  @@index([organizationId])
   @@map("classes")
 }
 
@@ -155,35 +201,41 @@ model ClassStudent {
 }
 
 model Invoice {
-  id          String        @id @default(uuid())
-  userId      String
-  classId     String?
-  description String
-  amount      Decimal       @db.Decimal(10, 2)
-  dueDate     DateTime
-  paidDate    DateTime?
-  status      InvoiceStatus @default(PENDING)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id             String        @id @default(uuid())
+  organizationId String
+  userId         String
+  classId        String?
+  description    String
+  amount         Decimal       @db.Decimal(10, 2)
+  dueDate        DateTime
+  paidDate       DateTime?
+  status         InvoiceStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   // Relações
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  class       Class?        @relation(fields: [classId], references: [id], onDelete: SetNull)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  class          Class?        @relation(fields: [classId], references: [id], onDelete: SetNull)
 
+  @@index([organizationId])
   @@map("invoices")
 }
 
 model Store {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relações
-  products    Product[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  products       Product[]
 
+  @@index([organizationId])
   @@map("stores")
 }
 
@@ -226,16 +278,19 @@ model StockMovement {
 }
 
 model Sale {
-  id          String   @id @default(uuid())
-  userId      String   // Vendedor
-  total       Decimal  @db.Decimal(10, 2)
-  notes       String?
-  createdAt   DateTime @default(now())
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String   // Vendedor
+  total          Decimal  @db.Decimal(10, 2)
+  notes          String?
+  createdAt      DateTime @default(now())
 
   // Relações
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items       SaleItem[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items          SaleItem[]
 
+  @@index([organizationId])
   @@map("sales")
 }
 
