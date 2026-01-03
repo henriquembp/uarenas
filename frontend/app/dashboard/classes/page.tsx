@@ -100,12 +100,6 @@ export default function ClassesPage() {
     monthlyPrice: '',
   })
   const [submitting, setSubmitting] = useState(false)
-  const [availability, setAvailability] = useState<{
-    availableSlots: string[]
-    bookedSlots: { timeSlot: string }[]
-    premiumSlots: string[]
-  } | null>(null)
-  const [loadingAvailability, setLoadingAvailability] = useState(false)
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
