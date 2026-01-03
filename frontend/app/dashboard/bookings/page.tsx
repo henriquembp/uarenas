@@ -83,6 +83,18 @@ export default function BookingsPage() {
   const bookingsListRef = useRef<HTMLDivElement>(null)
   const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false)
   const [bookingToCancel, setBookingToCancel] = useState<string | null>(null)
+  const [showBookedInfoModal, setShowBookedInfoModal] = useState(false)
+  const [selectedBookedInfo, setSelectedBookedInfo] = useState<{
+    timeSlot: string
+    booking: {
+      id: string
+      userId: string
+      userName: string
+      userEmail: string
+      status: string
+      notes?: string
+    }
+  } | null>(null)
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -533,26 +545,27 @@ export default function BookingsPage() {
                           <button
                             key={timeSlot}
                             onClick={() => {
-                              if (!booked) {
+                              if (booked && bookedInfo) {
+                                // Se estiver ocupado, mostra modal com informações
+                                setSelectedBookedInfo(bookedInfo)
+                                setShowBookedInfoModal(true)
+                              } else if (!booked) {
+                                // Se estiver disponível, abre modal de criação
                                 setSelectedTimeSlot(timeSlot)
                                 setShowCreateModal(true)
                               }
                             }}
-                            disabled={booked}
                             className={`p-3 rounded-lg text-sm font-medium transition-colors ${
                               booked
-                                ? 'bg-red-100 text-red-800 cursor-not-allowed'
+                                ? 'bg-red-100 text-red-800 cursor-pointer active:bg-red-200'
                                 : premium
                                 ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer'
                                 : 'bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer'
                             }`}
-                            title={
-                              booked
-                                ? `Ocupado por: ${bookedInfo?.booking.userName}`
-                                : premium
-                                ? 'Horário Nobre'
-                                : 'Disponível'
-                            }
+                            style={booked ? {
+                              touchAction: 'manipulation',
+                              minHeight: '44px',
+                            } : {}}
                           >
                             <div className="flex flex-col items-center">
                               <span>{formatTime(timeSlot)}</span>
@@ -958,6 +971,79 @@ export default function BookingsPage() {
                 }}
               >
                 Sim, cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Informações do Horário Ocupado */}
+      {showBookedInfoModal && selectedBookedInfo && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Horário Ocupado</h3>
+              <button
+                onClick={() => {
+                  setShowBookedInfoModal(false)
+                  setSelectedBookedInfo(null)
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Quadra</label>
+                <p className="text-gray-900">{availability?.court.name}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                <p className="text-gray-900">{formatDate(availability?.date || selectedDate)}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
+                <p className="text-gray-900">
+                  {formatTime(selectedBookedInfo.timeSlot)}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reservado por</label>
+                <p className="text-gray-900 font-semibold">{selectedBookedInfo.booking.userName}</p>
+                <p className="text-sm text-gray-600">{selectedBookedInfo.booking.userEmail}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                {getStatusBadge(selectedBookedInfo.booking.status)}
+              </div>
+
+              {selectedBookedInfo.booking.notes && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+                  <p className="text-gray-900 text-sm">{selectedBookedInfo.booking.notes}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6">
+              <button
+                onClick={() => {
+                  setShowBookedInfoModal(false)
+                  setSelectedBookedInfo(null)
+                }}
+                className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                style={{ 
+                  minHeight: '44px',
+                  touchAction: 'manipulation',
+                }}
+              >
+                Fechar
               </button>
             </div>
           </div>
