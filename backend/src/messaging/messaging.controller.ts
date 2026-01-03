@@ -53,10 +53,36 @@ export class MessagingController {
   async testConnection() {
     // Testa se o provider está configurado
     const provider = process.env.MESSAGING_PROVIDER || 'TWILIO';
+    const configured = this.checkProviderConfig(provider);
+    
     return {
       provider,
-      configured: this.checkProviderConfig(provider),
-      message: 'Verifique as variáveis de ambiente para o provider selecionado',
+      configured,
+      message: configured 
+        ? 'Provider configurado corretamente' 
+        : 'Provider não configurado. Verifique as variáveis de ambiente.',
+      requiredVars: this.getRequiredVars(provider),
+    };
+  }
+
+  @Post('test-send')
+  @Roles('ADMIN')
+  @UseGuards(RolesGuard)
+  async testSend(
+    @Body() body: { to: string; message?: string },
+    @Tenant() organizationId: string,
+  ) {
+    const testMessage = body.message || 'Teste de mensagem WhatsApp - Sistema Arenas';
+    const success = await this.messagingService.sendMessage(
+      body.to,
+      testMessage,
+      organizationId,
+    );
+    return {
+      success,
+      message: success 
+        ? 'Mensagem de teste enviada com sucesso!' 
+        : 'Erro ao enviar mensagem. Verifique os logs e a configuração.',
     };
   }
 
@@ -80,6 +106,19 @@ export class MessagingController {
         );
       default:
         return false;
+    }
+  }
+
+  private getRequiredVars(provider: string): string[] {
+    switch (provider) {
+      case 'TWILIO':
+        return ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_WHATSAPP_FROM'];
+      case 'EVOLUTION_API':
+        return ['EVOLUTION_API_URL', 'EVOLUTION_API_KEY', 'EVOLUTION_INSTANCE_NAME'];
+      case 'WHATSAPP_BUSINESS':
+        return ['WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_ACCESS_TOKEN'];
+      default:
+        return [];
     }
   }
 }

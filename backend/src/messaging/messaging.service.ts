@@ -207,7 +207,13 @@ export class MessagingService {
         },
       });
 
-      if (!booking || !booking.user.phone) {
+      if (!booking) {
+        this.logger.warn(`Reserva ${bookingId} não encontrada para organização ${organizationId}`);
+        return false;
+      }
+
+      if (!booking.user.phone) {
+        this.logger.warn(`Usuário ${booking.user.id} não possui telefone cadastrado para envio de WhatsApp`);
         return false;
       }
 
@@ -218,9 +224,18 @@ export class MessagingService {
         `Horário: ${booking.startTime} - ${booking.endTime}\n\n` +
         `Obrigado por escolher nossos serviços!`;
 
-      return await this.sendMessage(booking.user.phone, message, organizationId);
+      this.logger.log(`Enviando confirmação de reserva ${bookingId} para ${booking.user.phone}`);
+      const result = await this.sendMessage(booking.user.phone, message, organizationId);
+      
+      if (result) {
+        this.logger.log(`Confirmação de reserva ${bookingId} enviada com sucesso`);
+      } else {
+        this.logger.warn(`Falha ao enviar confirmação de reserva ${bookingId}`);
+      }
+      
+      return result;
     } catch (error) {
-      this.logger.error(`Erro ao enviar confirmação de reserva: ${error.message}`);
+      this.logger.error(`Erro ao enviar confirmação de reserva: ${error.message}`, error.stack);
       return false;
     }
   }
