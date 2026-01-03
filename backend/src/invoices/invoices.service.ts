@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MessagingService } from '../messaging/messaging.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class InvoicesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private messagingService: MessagingService,
+  ) {}
 
   async create(data: CreateInvoiceDto, organizationId: string) {
     // Valida se o usuário pertence à organização
@@ -30,7 +34,7 @@ export class InvoicesService {
     // Parse da data de vencimento
     const dueDate = new Date(data.dueDate);
 
-    return this.prisma.invoice.create({
+    const invoice = await this.prisma.invoice.create({
       data: {
         organizationId,
         userId: data.userId,
@@ -53,6 +57,15 @@ export class InvoicesService {
         class: true,
       },
     });
+
+    // Envia notificação WhatsApp (não bloqueia se falhar)
+    try {
+      await this.messagingService.sendInvoiceNotification(invoice.id, organizationId);
+    } catch (error) {
+      console.error('Erro ao enviar notificação WhatsApp:', error);
+    }
+
+    return invoice;
   }
 
   async createFromBooking(
@@ -63,7 +76,7 @@ export class InvoicesService {
     description: string,
     dueDate: Date,
   ) {
-    return this.prisma.invoice.create({
+    const invoice = await this.prisma.invoice.create({
       data: {
         organizationId,
         userId,
@@ -84,6 +97,15 @@ export class InvoicesService {
         },
       },
     });
+
+    // Envia notificação WhatsApp (não bloqueia se falhar)
+    try {
+      await this.messagingService.sendInvoiceNotification(invoice.id, organizationId);
+    } catch (error) {
+      console.error('Erro ao enviar notificação WhatsApp:', error);
+    }
+
+    return invoice;
   }
 
   async findAll(organizationId: string, filters?: any) {

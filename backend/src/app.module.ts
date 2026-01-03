@@ -13,6 +13,7 @@ import { StockModule } from './stock/stock.module';
 import { SalesModule } from './sales/sales.module';
 import { UploadModule } from './upload/upload.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { MessagingModule } from './messaging/messaging.module';
 import { HealthController } from './health/health.controller';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { TenantInterceptor } from './tenant/tenant.interceptor';
@@ -37,6 +38,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
     SalesModule,
     UploadModule,
     OrganizationsModule,
+    MessagingModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, ConflictException, NotFoundException }
 import { PrismaService } from '../prisma/prisma.service';
 import { CourtAvailabilityService } from '../courts/court-availability.service';
 import { InvoicesService } from '../invoices/invoices.service';
+import { MessagingService } from '../messaging/messaging.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 
@@ -11,6 +12,7 @@ export class BookingsService {
     private prisma: PrismaService,
     private availabilityService: CourtAvailabilityService,
     private invoicesService: InvoicesService,
+    private messagingService: MessagingService,
   ) {}
 
   async create(data: CreateBookingDto, userId: string, organizationId: string) {
@@ -127,6 +129,13 @@ export class BookingsService {
         // Log do erro mas não falha a criação da reserva
         console.error('Erro ao criar invoice para reserva:', error);
       }
+    }
+
+    // Envia notificação WhatsApp de confirmação (não bloqueia se falhar)
+    try {
+      await this.messagingService.sendBookingConfirmation(booking.id, organizationId);
+    } catch (error) {
+      console.error('Erro ao enviar notificação WhatsApp:', error);
     }
 
     return booking;
