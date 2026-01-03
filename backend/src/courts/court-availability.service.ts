@@ -280,11 +280,19 @@ export class CourtAvailabilityService {
     date: Date,
     timeSlot: string,
   ): Promise<boolean> {
-    const dayOfWeek = date.getDay();
-    const dateOnly = new Date(date);
-    dateOnly.setHours(0, 0, 0, 0);
+    // Usa UTC para manter consistência com o resto do código
+    // A data já vem como UTC do BookingsService
+    const dayOfWeek = date.getUTCDay(); // Dia da semana em UTC (0 = Domingo, 6 = Sábado)
+    
+    // Cria dateOnly usando UTC para comparação
+    const dateOnly = new Date(Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      0, 0, 0, 0
+    ));
     const nextDay = new Date(dateOnly);
-    nextDay.setDate(nextDay.getDate() + 1);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
     // Verifica primeiro se há disponibilidade específica para essa data
     const specificAvailability = await this.prisma.courtAvailability.findFirst({
@@ -320,8 +328,14 @@ export class CourtAvailabilityService {
     }
 
     // Busca todas as datas específicas configuradas (apenas futuras ou atual)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Usa UTC para manter consistência
+    const now = new Date();
+    const today = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      0, 0, 0, 0
+    ));
 
     const specificDates = await this.prisma.courtAvailability.findMany({
       where: {
