@@ -143,10 +143,18 @@ export default function ClassesPage() {
   const fetchTeachers = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await api.get<Teacher[]>(`${apiUrl}/users`, {
+      const response = await api.get(`${apiUrl}/users`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      setTeachers(response.data.filter((user) => user.role === 'TEACHER'))
+      // Filtra apenas professores (role TEACHER) e mapeia para o tipo Teacher
+      const teachersData: Teacher[] = (response.data as any[])
+        .filter((user: any) => user.role === 'TEACHER')
+        .map((user: any) => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        }))
+      setTeachers(teachersData)
     } catch (error) {
       console.error('Erro ao carregar professores:', error)
     }
