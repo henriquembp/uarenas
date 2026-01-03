@@ -320,6 +320,52 @@ export class CourtAvailabilityService {
     return !!weeklyAvailability;
   }
 
+  async isTimeSlotPremium(
+    courtId: string,
+    date: Date,
+    timeSlot: string,
+  ): Promise<boolean> {
+    // Usa UTC para manter consistência
+    const dayOfWeek = date.getUTCDay();
+    
+    // Cria dateOnly usando UTC para comparação
+    const dateOnly = new Date(Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      0, 0, 0, 0
+    ));
+    const nextDay = new Date(dateOnly);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+    // Verifica primeiro se há disponibilidade específica para essa data
+    const specificAvailability = await this.prisma.courtAvailability.findFirst({
+      where: {
+        courtId,
+        specificDate: { gte: dateOnly, lt: nextDay },
+        timeSlot,
+        isPremium: true,
+      },
+    });
+
+    if (specificAvailability) {
+      return true;
+    }
+
+    // Se não houver disponibilidade específica, verifica a recorrente
+    const weeklyAvailability = await this.prisma.courtAvailability.findFirst({
+      where: {
+        courtId,
+        dayOfWeek,
+        specificDate: null,
+        timeSlot,
+        isPremium: true,
+      },
+    });
+
+    return !!weeklyAvailability;
+  }
+
   async getSpecificDates(courtId: string): Promise<string[]> {
     // Verifica se a quadra existe
     const court = await this.prisma.court.findUnique({ where: { id: courtId } });

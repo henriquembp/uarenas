@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CourtAvailabilityService } from '../courts/court-availability.service';
+import { InvoicesService } from '../invoices/invoices.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 
@@ -9,6 +10,7 @@ export class BookingsService {
   constructor(
     private prisma: PrismaService,
     private availabilityService: CourtAvailabilityService,
+    private invoicesService: InvoicesService,
   ) {}
 
   async create(data: CreateBookingDto, userId: string, organizationId: string) {
@@ -63,7 +65,30 @@ export class BookingsService {
     
     const endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
 
-    return this.prisma.booking.create({
+    // Busca informações da quadra para calcular o preço
+    const court = await this.prisma.court.findFirst({
+      where: { id: data.courtId, organizationId, isActive: true },
+    });
+    if (!court) {
+      throw new NotFoundException('Quadra não encontrada ou inativa.');
+    }
+
+    // Verifica se é horário premium
+    const isPremium = await this.availabilityService.isTimeSlotPremium(
+      data.courtId,
+      bookingDate,
+      data.startTime,
+    );
+
+    // Calcula o preço
+    const price = isPremium && court.premiumPrice
+      ? Number(court.premiumPrice)
+      : court.defaultPrice
+        ? Number(court.defaultPrice)
+        : 0;
+
+    // Cria a reserva
+    const booking = await this.prisma.booking.create({
       data: {
         organizationId,
         userId,
@@ -81,6 +106,30 @@ export class BookingsService {
         court: true,
       },
     });
+
+    // Cria invoice automaticamente se houver preço configurado
+    if (price > 0) {
+      const description = `Reserva - ${court.name} - ${data.date} ${data.startTime}`;
+      const dueDate = new Date(bookingDate);
+      // Define a data de vencimento como a data da reserva
+      dueDate.setUTCHours(23, 59, 59, 999);
+
+      try {
+        await this.invoicesService.createFromBooking(
+          booking.id,
+          organizationId,
+          userId,
+          price,
+          description,
+          dueDate,
+        );
+      } catch (error) {
+        // Log do erro mas não falha a criação da reserva
+        console.error('Erro ao criar invoice para reserva:', error);
+      }
+    }
+
+    return booking;
   }
 
   async findAll(organizationId: string, filters?: any) {

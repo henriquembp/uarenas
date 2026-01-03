@@ -153,6 +153,7 @@ model Booking {
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   court          Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  invoices       Invoice[]
 
   @@index([organizationId])
   @@map("bookings")
@@ -204,6 +205,7 @@ model Invoice {
   id             String        @id @default(uuid())
   organizationId String
   userId         String
+  bookingId      String?       // Relacionamento com reserva
   classId        String?
   description    String
   amount         Decimal       @db.Decimal(10, 2)
@@ -216,9 +218,12 @@ model Invoice {
   // Relações
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking        Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   class          Class?        @relation(fields: [classId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
+  @@index([userId])
+  @@index([bookingId])
   @@map("invoices")
 }
 
