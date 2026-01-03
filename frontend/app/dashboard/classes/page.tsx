@@ -123,10 +123,18 @@ export default function ClassesPage() {
   const fetchCourts = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await api.get<Court[]>(`${apiUrl}/courts`, {
+      const response = await api.get(`${apiUrl}/courts`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      setCourts(response.data.filter((court) => court.isActive))
+      // Filtra apenas quadras ativas e mapeia para o tipo Court
+      const activeCourts: Court[] = (response.data as any[])
+        .filter((court: any) => court.isActive === true)
+        .map((court: any) => ({
+          id: court.id,
+          name: court.name,
+          isActive: Boolean(court.isActive),
+        }))
+      setCourts(activeCourts)
     } catch (error) {
       console.error('Erro ao carregar quadras:', error)
     }
