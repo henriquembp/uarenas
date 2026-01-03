@@ -20,18 +20,23 @@ import {
   Settings
 } from 'lucide-react'
 
-const menuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/courts', label: 'Quadras', icon: Home },
-  { href: '/dashboard/bookings', label: 'Reservas', icon: Calendar },
-  { href: '/dashboard/classes', label: 'Turmas', icon: Users },
-  { href: '/dashboard/teachers', label: 'Professores', icon: GraduationCap },
-  { href: '/dashboard/invoices', label: 'Financeiro', icon: DollarSign },
-  { href: '/dashboard/products', label: 'Produtos', icon: ShoppingBag },
-  { href: '/dashboard/stock', label: 'Estoque', icon: Package },
-  { href: '/dashboard/sales', label: 'Vendas', icon: ShoppingCart },
-  { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
+const allMenuItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN'] },
+  { href: '/dashboard/courts', label: 'Quadras', icon: Home, roles: ['ADMIN', 'VISITOR'] },
+  { href: '/dashboard/bookings', label: 'Reservas', icon: Calendar, roles: ['ADMIN', 'VISITOR'] },
+  { href: '/dashboard/classes', label: 'Turmas', icon: Users, roles: ['ADMIN'] },
+  { href: '/dashboard/teachers', label: 'Professores', icon: GraduationCap, roles: ['ADMIN'] },
+  { href: '/dashboard/invoices', label: 'Financeiro', icon: DollarSign, roles: ['ADMIN'] },
+  { href: '/dashboard/products', label: 'Produtos', icon: ShoppingBag, roles: ['ADMIN'] },
+  { href: '/dashboard/stock', label: 'Estoque', icon: Package, roles: ['ADMIN'] },
+  { href: '/dashboard/sales', label: 'Vendas', icon: ShoppingCart, roles: ['ADMIN'] },
+  { href: '/dashboard/settings', label: 'Configurações', icon: Settings, roles: ['ADMIN'] },
 ]
+
+// Função para filtrar itens do menu baseado no role do usuário
+const getMenuItems = (userRole: string) => {
+  return allMenuItems.filter(item => item.roles.includes(userRole))
+}
 
 interface Organization {
   id: string
@@ -62,7 +67,18 @@ export default function DashboardLayout({
       return
     }
 
-    setUser(JSON.parse(userData))
+    const parsedUser = JSON.parse(userData)
+    setUser(parsedUser)
+    
+    // Verificar se VISITOR está tentando acessar uma rota não permitida
+    if (parsedUser.role === 'VISITOR') {
+      const allowedRoutes = ['/dashboard/courts', '/dashboard/bookings']
+      if (!allowedRoutes.includes(pathname)) {
+        // Redireciona para Quadras se tentar acessar rota não permitida
+        router.push('/dashboard/courts')
+        return
+      }
+    }
     
     // Buscar dados da organização
     const fetchOrganization = async () => {
@@ -78,7 +94,7 @@ export default function DashboardLayout({
     }
 
     fetchOrganization()
-  }, [router])
+  }, [router, pathname])
 
   // Aplicar cores dinamicamente
   useEffect(() => {
@@ -142,7 +158,7 @@ export default function DashboardLayout({
             </div>
             <div className="mt-8 flex-grow flex flex-col">
               <nav className="flex-1 px-2 space-y-1">
-                {menuItems.map((item) => {
+                {getMenuItems(user.role || 'VISITOR').map((item) => {
                   const Icon = item.icon
                   const isActive = pathname === item.href
                   return (
@@ -226,7 +242,7 @@ export default function DashboardLayout({
               </div>
               <div className="flex-1 overflow-y-auto py-4">
                 <nav className="px-2 space-y-1">
-                  {menuItems.map((item) => {
+                  {getMenuItems(user.role || 'VISITOR').map((item) => {
                     const Icon = item.icon
                     const isActive = pathname === item.href
                     return (
