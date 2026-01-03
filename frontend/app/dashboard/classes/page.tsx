@@ -641,48 +641,128 @@ export default function ClassesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Dia da Semana <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.dayOfWeek}
-                    onChange={(e) => setFormData({ ...formData, dayOfWeek: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {DAYS_OF_WEEK.map((day, index) => (
-                      <option key={index} value={index}>
-                        {day}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Horário Início <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.startTime}
-                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Horário Fim <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.endTime}
-                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Dia da Semana <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.dayOfWeek}
+                  onChange={(e) => setFormData({ ...formData, dayOfWeek: parseInt(e.target.value), startTime: '', endTime: '' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {DAYS_OF_WEEK.map((day, index) => (
+                    <option key={index} value={index}>
+                      {day}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* Seleção de Horário Disponível */}
+              {formData.courtId && formData.dayOfWeek !== undefined && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Horário Disponível <span className="text-red-500">*</span>
+                  </label>
+                  {loadingAvailability ? (
+                    <div className="text-center py-4">
+                      <Loader2 className="mx-auto h-6 w-6 animate-spin text-indigo-600" />
+                      <p className="text-sm text-gray-500 mt-2">Carregando horários disponíveis...</p>
+                    </div>
+                  ) : availability ? (
+                    <div>
+                      {availability.availableSlots.length === 0 && availability.bookedSlots.length === 0 ? (
+                        <p className="text-sm text-gray-500 py-4">
+                          Nenhum horário disponível para {DAYS_OF_WEEK[formData.dayOfWeek]} nesta quadra.
+                        </p>
+                      ) : (
+                        <div>
+                          <div className="grid grid-cols-4 md:grid-cols-6 gap-2 mb-4">
+                            {(() => {
+                              // Combina horários disponíveis e ocupados para exibir todos
+                              const allSlots = new Set([
+                                ...availability.availableSlots,
+                                ...availability.bookedSlots.map((slot) => slot.timeSlot),
+                              ])
+                              const sortedSlots = Array.from(allSlots).sort()
+                              
+                              return sortedSlots.map((timeSlot) => {
+                                const booked = isBooked(timeSlot)
+                                const premium = isPremiumSlot(timeSlot)
+                                const selected = formData.startTime === timeSlot
+
+                                return (
+                                  <button
+                                    key={timeSlot}
+                                    type="button"
+                                    onClick={() => {
+                                      if (!booked) {
+                                        handleTimeSlotSelect(timeSlot)
+                                      }
+                                    }}
+                                    disabled={booked}
+                                    className={`p-3 rounded-lg text-sm font-medium transition-colors ${
+                                      booked
+                                        ? 'bg-red-100 text-red-800 cursor-not-allowed opacity-50'
+                                        : selected
+                                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                        : premium
+                                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer'
+                                        : 'bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer'
+                                    }`}
+                                  >
+                                    <div className="flex flex-col items-center">
+                                      <span>{formatTime(timeSlot)}</span>
+                                      {premium && <span className="text-xs">⭐</span>}
+                                      {booked && <span className="text-xs">🔒</span>}
+                                    </div>
+                                  </button>
+                                )
+                              })
+                            })()}
+                          </div>
+                          
+                          {/* Legenda */}
+                          <div className="p-3 bg-gray-50 rounded-lg">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+                                  <span className="text-green-800">✓</span>
+                                </div>
+                                <span className="text-gray-700">Disponível</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-yellow-100 rounded flex items-center justify-center">
+                                  <span className="text-yellow-800">⭐</span>
+                                </div>
+                                <span className="text-gray-700">Horário Nobre</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
+                                  <span className="text-red-800">🔒</span>
+                                </div>
+                                <span className="text-gray-700">Ocupado</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {formData.startTime && (
+                            <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-md">
+                              <p className="text-sm font-medium text-indigo-900">
+                                Horário selecionado: {formatTime(formData.startTime)} - {formatTime(formData.endTime)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 py-4">
+                      Selecione uma quadra e um dia da semana para ver os horários disponíveis.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -724,7 +804,7 @@ export default function ClassesPage() {
               </button>
               <button
                 onClick={handleCreate}
-                disabled={submitting}
+                disabled={submitting || !formData.startTime}
                 className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
               >
                 {submitting ? (
