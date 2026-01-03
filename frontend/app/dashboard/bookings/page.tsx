@@ -736,8 +736,34 @@ export default function BookingsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
-                <p className="text-gray-900">{formatTime(selectedTimeSlot)}</p>
+                <p className="text-gray-900">
+                  {formatTime(selectedTimeSlot)}
+                  {selectedTimeSlot && isPremiumSlot(selectedTimeSlot) && (
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                      ⭐ Horário Nobre
+                    </span>
+                  )}
+                </p>
               </div>
+
+              {/* Valor da Reserva */}
+              {availability && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Valor</label>
+                  <p className="text-gray-900 font-semibold text-lg">
+                    {selectedTimeSlot && isPremiumSlot(selectedTimeSlot) && availability.court.premiumPrice
+                      ? `R$ ${Number(availability.court.premiumPrice).toFixed(2)}`
+                      : availability.court.defaultPrice
+                      ? `R$ ${Number(availability.court.defaultPrice).toFixed(2)}`
+                      : 'Valor não informado'}
+                    {selectedTimeSlot && isPremiumSlot(selectedTimeSlot) && (
+                      <span className="ml-2 text-sm text-yellow-700 font-normal">
+                        (Horário Nobre)
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Observações (opcional)</label>
