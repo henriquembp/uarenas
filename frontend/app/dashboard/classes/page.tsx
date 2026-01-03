@@ -41,6 +41,7 @@ interface Class {
 interface Court {
   id: string
   name: string
+  isActive: boolean
 }
 
 interface Teacher {
