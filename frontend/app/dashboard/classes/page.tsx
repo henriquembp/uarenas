@@ -89,11 +89,23 @@ export default function ClassesPage() {
     endDate: '',
     isActive: true,
   })
+  const [availability, setAvailability] = useState<{
+    availableSlots: string[]
+    bookedSlots: { timeSlot: string }[]
+    premiumSlots: string[]
+  } | null>(null)
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
   const [studentFormData, setStudentFormData] = useState({
     studentId: '',
     monthlyPrice: '',
   })
   const [submitting, setSubmitting] = useState(false)
+  const [availability, setAvailability] = useState<{
+    availableSlots: string[]
+    bookedSlots: { timeSlot: string }[]
+    premiumSlots: string[]
+  } | null>(null)
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -103,6 +115,15 @@ export default function ClassesPage() {
     fetchTeachers()
     fetchUsers()
   }, [])
+
+  useEffect(() => {
+    // Quando quadra ou dia da semana mudar, busca disponibilidade
+    if (formData.courtId && formData.dayOfWeek !== undefined) {
+      fetchAvailabilityForDayOfWeek()
+    } else {
+      setAvailability(null)
+    }
+  }, [formData.courtId, formData.dayOfWeek])
 
   const fetchClasses = async () => {
     setLoading(true)
@@ -346,6 +367,75 @@ export default function ClassesPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR')
+  }
+
+  const fetchAvailabilityForDayOfWeek = async () => {
+    if (!formData.courtId || formData.dayOfWeek === undefined) return
+
+    setLoadingAvailability(true)
+    try {
+      const token = localStorage.getItem('token')
+      
+      // Calcula a próxima ocorrência do dia da semana selecionado
+      const today = new Date()
+      const currentDay = today.getDay()
+      let daysUntilTarget = formData.dayOfWeek - currentDay
+      if (daysUntilTarget <= 0) {
+        daysUntilTarget += 7 // Próxima semana
+      }
+      const targetDate = new Date(today)
+      targetDate.setDate(today.getDate() + daysUntilTarget)
+      const dateString = targetDate.toISOString().split('T')[0]
+
+      const response = await api.get(`${apiUrl}/bookings/availability`, {
+        params: { courtId: formData.courtId, date: dateString },
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      
+      setAvailability({
+        availableSlots: response.data.availableSlots || [],
+        bookedSlots: response.data.bookedSlots || [],
+        premiumSlots: response.data.premiumSlots || [],
+      })
+    } catch (error) {
+      console.error('Erro ao carregar disponibilidade:', error)
+      setAvailability(null)
+    } finally {
+      setLoadingAvailability(false)
+    }
+  }
+
+  const handleTimeSlotSelect = (timeSlot: string) => {
+    // Calcula endTime (1 hora depois do startTime)
+    const [hours, minutes] = timeSlot.split(':').map(Number)
+    let endHours = hours + 1
+    if (endHours >= 24) {
+      endHours = endHours - 24
+    }
+    const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+    
+    setFormData({
+      ...formData,
+      startTime: timeSlot,
+      endTime,
+    })
+  }
+
+  const isPremiumSlot = (timeSlot: string) => {
+    return availability?.premiumSlots?.includes(timeSlot) || false
+  }
+
+  const isBooked = (timeSlot: string) => {
+    if (!availability?.bookedSlots) return false
+    const normalizedTimeSlot = timeSlot.substring(0, 5)
+    return availability.bookedSlots.some((slot) => {
+      const normalizedSlot = slot.timeSlot.substring(0, 5)
+      return normalizedSlot === normalizedTimeSlot
+    })
+  }
+
+  const formatTime = (time: string) => {
+    return time.substring(0, 5) // Retorna apenas HH:mm
   }
 
   return (
