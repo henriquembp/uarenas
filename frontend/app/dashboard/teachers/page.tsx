@@ -19,7 +19,10 @@ export default function TeachersPage() {
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showPromoteModal, setShowPromoteModal] = useState(false)
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
+  const [allUsers, setAllUsers] = useState<any[]>([])
+  const [selectedUserId, setSelectedUserId] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -32,7 +35,22 @@ export default function TeachersPage() {
 
   useEffect(() => {
     fetchTeachers()
+    fetchAllUsers()
   }, [])
+
+  const fetchAllUsers = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await api.get(`${apiUrl}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      // Filtra apenas usuários que não são professores
+      const nonTeachers = (response.data as any[]).filter((user: any) => user.role !== 'TEACHER')
+      setAllUsers(nonTeachers)
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error)
+    }
+  }
 
   const fetchTeachers = async () => {
     setLoading(true)
@@ -145,10 +163,41 @@ export default function TeachersPage() {
       })
 
       fetchTeachers()
+      fetchAllUsers()
       alert('Professor excluído com sucesso!')
     } catch (error: any) {
       console.error('Erro ao excluir professor:', error)
       alert(error.response?.data?.message || 'Erro ao excluir professor')
+    }
+  }
+
+  const handlePromoteUser = async () => {
+    if (!selectedUserId) {
+      alert('Selecione um usuário')
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const token = localStorage.getItem('token')
+      await api.patch(
+        `${apiUrl}/users/${selectedUserId}`,
+        { role: 'TEACHER' },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      )
+
+      setShowPromoteModal(false)
+      setSelectedUserId('')
+      fetchTeachers()
+      fetchAllUsers()
+      alert('Usuário promovido a professor com sucesso!')
+    } catch (error: any) {
+      console.error('Erro ao promover usuário:', error)
+      alert(error.response?.data?.message || 'Erro ao promover usuário')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -160,13 +209,25 @@ export default function TeachersPage() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Professores</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Novo Professor
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setSelectedUserId('')
+              setShowPromoteModal(true)
+            }}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Promover Usuário
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Novo Professor
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -445,6 +506,77 @@ export default function TeachersPage() {
                   </span>
                 ) : (
                   'Atualizar Professor'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Promover Usuário */}
+      {showPromoteModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Promover Usuário a Professor</h3>
+              <button
+                onClick={() => {
+                  setShowPromoteModal(false)
+                  setSelectedUserId('')
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Selecione um usuário <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Selecione um usuário</option>
+                  {allUsers.map((user: any) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.email}) - {user.role}
+                    </option>
+                  ))}
+                </select>
+                {allUsers.length === 0 && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    Não há usuários disponíveis para promover. Todos os usuários já são professores ou não existem outros usuários no sistema.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowPromoteModal(false)
+                  setSelectedUserId('')
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                disabled={submitting}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handlePromoteUser}
+                disabled={submitting || !selectedUserId}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+              >
+                {submitting ? (
+                  <span className="flex items-center justify-center">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Promovendo...
+                  </span>
+                ) : (
+                  'Promover a Professor'
                 )}
               </button>
             </div>
