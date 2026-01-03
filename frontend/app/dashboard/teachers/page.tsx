@@ -23,6 +23,8 @@ export default function TeachersPage() {
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
   const [allUsers, setAllUsers] = useState<any[]>([])
   const [selectedUserId, setSelectedUserId] = useState('')
+  const [userSearchTerm, setUserSearchTerm] = useState('')
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -190,6 +192,8 @@ export default function TeachersPage() {
 
       setShowPromoteModal(false)
       setSelectedUserId('')
+      setUserSearchTerm('')
+      setShowUserDropdown(false)
       fetchTeachers()
       fetchAllUsers()
       alert('Usuário promovido a professor com sucesso!')
@@ -205,6 +209,15 @@ export default function TeachersPage() {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
+  const filteredUsers = allUsers.filter((user: any) => {
+    const searchLower = userSearchTerm.toLowerCase()
+    return (
+      user.name.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower) ||
+      user.role.toLowerCase().includes(searchLower)
+    )
+  })
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="flex justify-between items-center mb-6">
@@ -213,6 +226,8 @@ export default function TeachersPage() {
           <button
             onClick={() => {
               setSelectedUserId('')
+              setUserSearchTerm('')
+              setShowUserDropdown(false)
               setShowPromoteModal(true)
             }}
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
@@ -531,22 +546,73 @@ export default function TeachersPage() {
             </div>
 
             <div className="space-y-4">
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Selecione um usuário <span className="text-red-500">*</span>
+                  Buscar usuário <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
+                <input
+                  type="text"
+                  value={userSearchTerm}
+                  onChange={(e) => {
+                    setUserSearchTerm(e.target.value)
+                    setShowUserDropdown(true)
+                    if (!e.target.value) {
+                      setSelectedUserId('')
+                    }
+                  }}
+                  onFocus={() => setShowUserDropdown(true)}
+                  onBlur={() => {
+                    // Delay para permitir clique no item da lista
+                    setTimeout(() => setShowUserDropdown(false), 200)
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Selecione um usuário</option>
-                  {allUsers.map((user: any) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} ({user.email}) - {user.role}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Digite o nome ou email do usuário..."
+                />
+                
+                {showUserDropdown && userSearchTerm && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {filteredUsers.length === 0 ? (
+                      <div className="px-4 py-2 text-sm text-gray-500">
+                        Nenhum usuário encontrado
+                      </div>
+                    ) : (
+                      filteredUsers.map((user: any) => (
+                        <div
+                          key={user.id}
+                          onClick={() => {
+                            setSelectedUserId(user.id)
+                            setUserSearchTerm(`${user.name} (${user.email}) - ${user.role}`)
+                            setShowUserDropdown(false)
+                          }}
+                          className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                            selectedUserId === user.id ? 'bg-green-50' : ''
+                          }`}
+                        >
+                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                          <div className="text-xs text-gray-500">{user.email} - {user.role}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+                
+                {selectedUserId && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                    <div className="text-sm font-medium text-green-900">
+                      Usuário selecionado: {allUsers.find((u: any) => u.id === selectedUserId)?.name}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedUserId('')
+                        setUserSearchTerm('')
+                      }}
+                      className="text-xs text-green-600 hover:text-green-800 mt-1"
+                    >
+                      Limpar seleção
+                    </button>
+                  </div>
+                )}
+                
                 {allUsers.length === 0 && (
                   <p className="text-sm text-gray-500 mt-2">
                     Não há usuários disponíveis para promover. Todos os usuários já são professores ou não existem outros usuários no sistema.
