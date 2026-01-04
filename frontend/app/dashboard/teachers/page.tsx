@@ -219,10 +219,10 @@ export default function TeachersPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Professores</h1>
-        <div className="flex gap-2">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Professores</h1>
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           <button
             onClick={() => {
               setSelectedUserId('')
@@ -230,17 +230,17 @@ export default function TeachersPage() {
               setShowUserDropdown(false)
               setShowPromoteModal(true)
             }}
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center justify-center gap-2 text-sm md:text-base"
           >
-            <Plus className="h-5 w-5" />
-            Promover Usuário
+            <Plus className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="whitespace-nowrap">Promover Usuário</span>
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center justify-center gap-2 text-sm md:text-base"
           >
-            <Plus className="h-5 w-5" />
-            Novo Professor
+            <Plus className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="whitespace-nowrap">Novo Professor</span>
           </button>
         </div>
       </div>
@@ -255,78 +255,128 @@ export default function TeachersPage() {
           <p className="text-gray-600">Nenhum professor cadastrado.</p>
         </div>
       ) : (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Telefone
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cadastrado em
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {teachers.map((teacher) => (
-                <tr key={teacher.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <User className="h-6 w-6 text-indigo-600" />
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{teacher.name}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      {teacher.email}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      {teacher.phone || '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(teacher.createdAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(teacher)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                        title="Editar"
-                      >
-                        <Edit2 className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(teacher.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Excluir"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </td>
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white shadow rounded-lg overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nome
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Telefone
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cadastrado em
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ações
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {teachers.map((teacher) => (
+                  <tr key={teacher.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <User className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{teacher.name}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        {teacher.email}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        {teacher.phone || '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(teacher.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(teacher)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                          title="Editar"
+                        >
+                          <Edit2 className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(teacher.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {teachers.map((teacher) => (
+              <div key={teacher.id} className="bg-white shadow rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                      <User className="h-6 w-6 text-indigo-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">{teacher.name}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 ml-2">
+                    <button
+                      onClick={() => handleEdit(teacher)}
+                      className="text-indigo-600 hover:text-indigo-900"
+                      title="Editar"
+                    >
+                      <Edit2 className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(teacher.id)}
+                      className="text-red-600 hover:text-red-900"
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span className="truncate">{teacher.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span>{teacher.phone || '-'}</span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Cadastrado em: {formatDate(teacher.createdAt)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Modal de Criar Professor */}

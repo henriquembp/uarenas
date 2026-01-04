@@ -210,15 +210,15 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Financeiro</h1>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Financeiro</h1>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center justify-center gap-2 text-sm md:text-base w-full md:w-auto"
         >
-          <Plus className="h-5 w-5" />
-          Nova Fatura
+          <Plus className="h-4 w-4 md:h-5 md:w-5" />
+          <span className="whitespace-nowrap">Nova Fatura</span>
         </button>
       </div>
 
@@ -232,77 +232,144 @@ export default function InvoicesPage() {
           <p className="text-gray-600">Nenhuma fatura encontrada.</p>
         </div>
       ) : (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Descrição
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cliente
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Valor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vencimento
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {invoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{invoice.description}</div>
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white shadow rounded-lg overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Descrição
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cliente
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Valor
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Vencimento
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {invoices.map((invoice) => (
+                  <tr key={invoice.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{invoice.description}</div>
+                      {invoice.booking && (
+                        <div className="text-xs text-gray-500">
+                          {invoice.booking.court.name} - {formatDate(invoice.booking.date)} {invoice.booking.startTime}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{invoice.user.name}</div>
+                      <div className="text-xs text-gray-500">{invoice.user.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                      {formatCurrency(Number(invoice.amount))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(invoice.dueDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(invoice.status)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex gap-2">
+                        {invoice.status !== 'PAID' && invoice.status !== 'CANCELLED' && (
+                          <button
+                            onClick={() => handleMarkAsPaid(invoice.id)}
+                            className="text-green-600 hover:text-green-900"
+                            title="Marcar como paga"
+                          >
+                            <CheckCircle className="h-5 w-5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleEdit(invoice)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                          title="Editar"
+                        >
+                          <Edit2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {invoices.map((invoice) => (
+              <div key={invoice.id} className="bg-white shadow rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 mb-1">{invoice.description}</div>
                     {invoice.booking && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 mb-2">
                         {invoice.booking.court.name} - {formatDate(invoice.booking.date)} {invoice.booking.startTime}
                       </div>
                     )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{invoice.user.name}</div>
-                    <div className="text-xs text-gray-500">{invoice.user.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    {formatCurrency(Number(invoice.amount))}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(invoice.dueDate)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(invoice.status)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex gap-2">
-                      {invoice.status !== 'PAID' && invoice.status !== 'CANCELLED' && (
-                        <button
-                          onClick={() => handleMarkAsPaid(invoice.id)}
-                          className="text-green-600 hover:text-green-900"
-                          title="Marcar como paga"
-                        >
-                          <CheckCircle className="h-5 w-5" />
-                        </button>
-                      )}
+                  </div>
+                  <div className="flex gap-2 ml-2 flex-shrink-0">
+                    {invoice.status !== 'PAID' && invoice.status !== 'CANCELLED' && (
                       <button
-                        onClick={() => handleEdit(invoice)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                        title="Editar"
+                        onClick={() => handleMarkAsPaid(invoice.id)}
+                        className="text-green-600 hover:text-green-900"
+                        title="Marcar como paga"
                       >
-                        <Edit2 className="h-5 w-5" />
+                        <CheckCircle className="h-5 w-5" />
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    )}
+                    <button
+                      onClick={() => handleEdit(invoice)}
+                      className="text-indigo-600 hover:text-indigo-900"
+                      title="Editar"
+                    >
+                      <Edit2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm border-t pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      Cliente:
+                    </span>
+                    <span className="text-gray-900 font-medium">{invoice.user.name}</span>
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">{invoice.user.email}</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-gray-400" />
+                      Valor:
+                    </span>
+                    <span className="text-gray-900 font-semibold">{formatCurrency(Number(invoice.amount))}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      Vencimento:
+                    </span>
+                    <span className="text-gray-900">{formatDate(invoice.dueDate)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Status:</span>
+                    {getStatusBadge(invoice.status)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Modal de Criar Fatura */}
